@@ -42,8 +42,16 @@ Substrings Add(const Substrings& s1, const Substrings& s2) {
 
 Substrings Multiply(const Substrings& s1, const Substrings& s2) {
     Substrings res;
+    std::pair<size_t, size_t> eps = {0, 0};
     for (auto& sbstr1 : s1) {
+        if (sbstr1 == eps) {
+            res = Add(res, s2);
+            continue;
+        }
         for (auto& sbstr2 : s2) {
+            if (sbstr2 == eps) {
+                res.insert(sbstr1);
+            }
             if (sbstr1.second == sbstr2.first) {
                 res.insert({sbstr1.first, sbstr2.second});
             }
@@ -58,22 +66,15 @@ Substrings Multiply(const Substrings& s1, const Substrings& s2) {
     return res;
 }
 
-Substrings Iterate(const Substrings& s) {
+Substrings Iterate(const Substrings& s, size_t sizeOfString) {
     Substrings res = s;
     res.insert({0, 0});
-    if (s.empty()) {
-        return res;
-    }
-    for (auto it1 = s.begin(); it1 != s.end(); ++it1) {
-        auto lastSuccesful = it1;
-        for (auto it2 = it1; it2 != s.end(); ++it2) {
-            if (lastSuccesful->second < it2->first) {
-                break;
-            }
-            if (lastSuccesful->second == it2->first) {
-                res.insert({it1->first, it2->second});
-                lastSuccesful = it2;
-            }
+    res = Add(res, s);
+    for (size_t i = 0; i < sizeOfString; ++i) {
+        size_t prevSize = res.size();
+        res = Add(res, Multiply(res, s));
+        if (res.size() == prevSize) {
+            break;
         }
     }
     return res;
@@ -135,7 +136,7 @@ void FindLongestSubstring(std::ostream& out, const std::string& language, const 
             temp.push_back(summ);
         }
         if (language[i] == '*') {
-            Substrings iter = Iterate(temp.back());
+            Substrings iter = Iterate(temp.back(), text.size());
             temp.pop_back();
             temp.push_back(iter);
         }
